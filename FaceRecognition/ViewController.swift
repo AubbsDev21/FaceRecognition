@@ -35,6 +35,41 @@ class ViewController: UIViewController {
     }
     
     func Recognition() {
+        guard let image = CIImage(image: imageV.image!) else { return }
+        
+        let accuracy = [CIDetectorAccuracy: CIDetectorAccuracyHigh]
+        let faceDecteor = CIDetector(ofType: CIDetectorTypeFace, context: nil, options: accuracy)
+        guard let faces = faceDecteor?.features(in: image) else { return }
+        
+        //convert the core Image Coordinates to UIView Coordinate
+        let imageSize = image.extent.size
+        var transform = CGAffineTransform(scaleX: 1, y: -1)
+        transform = transform.translatedBy(x: 0, y: -imageSize.height)
+        
+        for face in faces as! [CIFaceFeature] {
+            
+            print("Found bounds are \(face.bounds)")
+            
+            //apply the transform to convert the coordinates
+            var faceVeiwBounds = face.bounds.applying(transform)
+            
+            //calculate the actual postion and size of the rectangle in the image veiw
+            let veiwSize = imageV.bounds.size
+            let scale = min(veiwSize.width / imageSize.width, veiwSize.height / imageSize.height)
+            
+            let offsetX = (veiwSize.width - imageSize.width * scale)
+            let offsetY = (veiwSize.height -  imageSize.height * scale)
+            
+            faceVeiwBounds = faceVeiwBounds.applying(CGAffineTransform(scaleX: scale, y: scale))
+            faceVeiwBounds.origin.x += offsetX
+            faceVeiwBounds.origin.y += offsetY
+            
+            let faceBox = UIView(frame: faceVeiwBounds)
+            
+            faceBox.layer.borderWidth = 3
+            faceBox.layer.borderColor = UIColor.darkGray.cgColor
+            faceBox.backgroundColor = UIColor.clear
+        }
         
     }
 
