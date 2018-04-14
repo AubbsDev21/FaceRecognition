@@ -10,7 +10,7 @@ import UIKit
 import CoreImage
 class ViewController: UIViewController {
 
-    let imageV: UIImageView = {
+    lazy var imageV: UIImageView = {
         let view = UIImageView()
             view.translatesAutoresizingMaskIntoConstraints = false
         view.isUserInteractionEnabled = true
@@ -25,6 +25,8 @@ class ViewController: UIViewController {
         // Do any additional setup after loading the view, typically from a nib.
         view.addSubview(imageV)
         setup()
+        Recognition()
+
     }
 
     
