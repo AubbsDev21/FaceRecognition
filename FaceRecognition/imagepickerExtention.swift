@@ -11,43 +11,26 @@ import CoreImage
 
 extension ViewController: UINavigationControllerDelegate, UIImagePickerControllerDelegate {
     
- @objc func SelcethandleView(sender: UITapGestureRecognizer) {
-    print("got it ")
-    for subview in imageV.subviews {
-        subview.removeFromSuperview()
-      }
-       selectImage()
-    }
-    
-    func  selectImage() {
-        let picker = UIImagePickerController()
-        //Helps with the UIpicker control
-        picker.delegate = self
-        present(picker, animated: true, completion: nil)
-    }
-    
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
-        var TheselectedImage: UIImage?
         
-        if let orignalImage = info["UIImagePickerControllerOriginalImage"] as? UIImage {
-            TheselectedImage = orignalImage
+        var newImage: UIImage
+        
+      
+        if let possibleImage = info[UIImagePickerControllerEditedImage] as? UIImage {
+            newImage = possibleImage
+        } else if let possibleImage = info["UIImagePickerControllerOriginalImage"] as? UIImage {
+            newImage = possibleImage
+        } else {
+            return
         }
-            
-        else if let editedImage = info["UIImagePickerControllerEditedImage"] as? UIImage {
-            TheselectedImage = editedImage
-            
+        
+        OperationQueue.main.addOperation {
+            self.imageV.contentMode = .scaleAspectFit
+            self.imageV.image = newImage
+            self.Recognition()
         }
         
         dismiss(animated: true, completion: nil)
-        
-        //attaching selected image to view
-        if let selectedImage = TheselectedImage  {
-            OperationQueue.main.addOperation {
-                self.imageV.contentMode = .scaleAspectFit
-                self.imageV.image = selectedImage
-            }
-           
-        }
     }
     
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {

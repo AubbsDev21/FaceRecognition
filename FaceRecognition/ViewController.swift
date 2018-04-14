@@ -10,40 +10,53 @@ import UIKit
 import CoreImage
 class ViewController: UIViewController {
 
-    lazy var imageV: UIImageView = {
-        let view = UIImageView()
-            view.translatesAutoresizingMaskIntoConstraints = false
-        view.isUserInteractionEnabled = true
-        
-        let tapview = UITapGestureRecognizer(target: self, action: #selector(SelcethandleView(sender:)))
-        view.addGestureRecognizer(tapview)
-        return view
-    }()
+    let imageV = UIImageView()
     let imagePicker = UIImagePickerController()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
+        
         view.addSubview(imageV)
-        setup()
-        Recognition()
-
+        imageV.frame = view.frame
+        
+        imagePicker.allowsEditing = true
+        imagePicker.delegate = self
+        imagePicker.sourceType = .photoLibrary
+        
+        let tapGestureRecognizer = UITapGestureRecognizer(target:self, action:#selector(self.imageTapped(_:)))
+        imageV.isUserInteractionEnabled = true
+        imageV.addGestureRecognizer(tapGestureRecognizer)
     }
-
     
     override func viewDidAppear(_ animated: Bool) {
         if imageV.image == nil {
-            selectImage()
+            selectNewImage()
         }
     }
     
+    // Remove red boxes from imageView
+    @objc func imageTapped(_ sender: UITapGestureRecognizer) {
+        for subview in imageV.subviews {
+            subview.removeFromSuperview()
+        }
+        
+        selectNewImage()
+    }
+    
+    func selectNewImage() {
+        present(imagePicker, animated: true, completion: nil)
+    }
+    
+    // Detect and highlight any faces in selected image
     func Recognition() {
+        
         guard let image = CIImage(image: imageV.image!) else { return }
         
         let accuracy = [CIDetectorAccuracy: CIDetectorAccuracyHigh]
-        let faceDecteor = CIDetector(ofType: CIDetectorTypeFace, context: nil, options: accuracy)
-        guard let faces = faceDecteor?.features(in: image) else { return }
+        let faceDetector = CIDetector(ofType: CIDetectorTypeFace, context: nil, options: accuracy)
+        guard let faces = faceDetector?.features(in: image) else { return }
         
-        //convert the core Image Coordinates to UIView Coordinate
+        // Convert the Core Image Coordinates to UIView Coordinates
         let imageSize = image.extent.size
         var transform = CGAffineTransform(scaleX: 1, y: -1)
         transform = transform.translatedBy(x: 0, y: -imageSize.height)
@@ -52,33 +65,39 @@ class ViewController: UIViewController {
             
             print("Found bounds are \(face.bounds)")
             
-            //apply the transform to convert the coordinates
-            var faceVeiwBounds = face.bounds.applying(transform)
+            // Apply the transform to convert the coordinates
+            var faceViewBounds = face.bounds.applying(transform)
             
-            //calculate the actual postion and size of the rectangle in the image veiw
-            let veiwSize = imageV.bounds.size
-            let scale = min(veiwSize.width / imageSize.width, veiwSize.height / imageSize.height)
+            // Calculate the actual position and size of the rectangle in the image view
+            let viewSize = imageV.bounds.size
+            let scale = min(viewSize.width / imageSize.width,
+                            viewSize.height / imageSize.height)
+            let offsetX = (viewSize.width - imageSize.width * scale) / 2
+            let offsetY = (viewSize.height - imageSize.height * scale) / 2
             
-            let offsetX = (veiwSize.width - imageSize.width * scale)
-            let offsetY = (veiwSize.height -  imageSize.height * scale)
+            faceViewBounds = faceViewBounds.applying(CGAffineTransform(scaleX: scale, y: scale))
+            faceViewBounds.origin.x += offsetX
+            faceViewBounds.origin.y += offsetY
             
-            faceVeiwBounds = faceVeiwBounds.applying(CGAffineTransform(scaleX: scale, y: scale))
-            faceVeiwBounds.origin.x += offsetX
-            faceVeiwBounds.origin.y += offsetY
+            let faceBox = UIView(frame: faceViewBounds)
             
-            let faceBox = UIView(frame: faceVeiwBounds)
             
             faceBox.layer.borderWidth = 3
-            faceBox.layer.borderColor = UIColor.darkGray.cgColor
+            faceBox.layer.borderColor = UIColor.lightGray.cgColor
             faceBox.backgroundColor = UIColor.clear
+            
+            imageV.addSubview(faceBox)
+            
+            if face.hasLeftEyePosition {
+                print("Left eye bounds are \(face.leftEyePosition)")
+            }
+            
+            if face.hasRightEyePosition {
+                print("Right eye bounds are \(face.rightEyePosition)")
+            }
         }
-        
     }
 
-    func setup() {
-        imageV.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
-        imageV.heightAnchor.constraint(equalTo: view.heightAnchor).isActive = true
-    
-    }
+
 }
 
