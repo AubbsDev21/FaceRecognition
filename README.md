@@ -24,7 +24,7 @@ Detecting a face or multiple faces
         transform = transform.translatedBy(x: 0, y: -imageSize.height)
 ```
 This takes the ponits around the face in a loop and creates a box around it.
-bash```
+```bash
   for face in faces as! [CIFaceFeature] {
             
             print("Found bounds are \(face.bounds)")
